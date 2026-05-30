@@ -1,23 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../services/api';
 
-interface ProductoMonitoreo {
-  id: string;
+interface Producto {
+  idProducto: number;
+  codigo: string;
   nombre: string;
-  ubicacion: string;
-  existencias: number;
+  bodega: string;
+  pasillo: string;
+  estante: string;
+  cantidadActual: number;
   stockCritico: number;
-  ultimoIngreso: string;
-  ultimoDespacho: string;
 }
 
 export default function Monitoreo() {
-  // Datos de prueba ficticios coherentes (Requisito de datos de prueba)
-  const [productos] = useState<ProductoMonitoreo[]>([
-    { id: 'PROD001', nombre: 'Smartphone Galaxy S24', ubicacion: 'Bodega A - Pasillo 2 - Estante 4', existencias: 5, stockCritico: 15, ultimoIngreso: '2026-05-28 14:30', ultimoDespacho: '2026-05-29 09:15' },
-    { id: 'PROD002', nombre: 'Memoria RAM DDR5 16GB', ubicacion: 'Bodega B - Pasillo 1 - Estante 2', existencias: 120, stockCritico: 30, ultimoIngreso: '2026-05-20 11:00', ultimoDespacho: '2026-05-27 16:45' },
-    { id: 'PROD003', nombre: 'Procesador Intel i9 14th Gen', ubicacion: 'Bodega A - Pasillo 3 - Estante 1', existencias: 8, stockCritico: 10, ultimoIngreso: '2026-05-15 08:00', ultimoDespacho: '2026-05-25 13:20' },
-    { id: 'PROD004', nombre: 'Disco Duro SSD 2TB', ubicacion: 'Bodega C - Pasillo 5 - Estante 3', existencias: 45, stockCritico: 20, ultimoIngreso: '2026-05-26 10:15', ultimoDespacho: '2026-05-28 11:10' },
-  ]);
+  const [productos, setProductos] = useState<Producto[]>([]);
+
+  useEffect(() => {
+    const cargarInventario = async () => {
+      try {
+        const response = await api.get('/Productos'); // Ajusta a '/Productos' si aplica
+        setProductos(response.data);
+      } catch (error) {
+        console.error("Error al cargar inventario", error);
+      }
+    };
+    cargarInventario();
+    
+    // Opcional: Polling cada 10 segundos para ver cambios en "tiempo real"
+    const interval = setInterval(cargarInventario, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -41,20 +53,18 @@ export default function Monitoreo() {
               <th className="p-4">Ubicación Física</th>
               <th className="p-4 text-center">Existencias</th>
               <th className="p-4 text-center">Stock Mínimo</th>
-              <th className="p-4">Último Ingreso</th>
-              <th className="p-4">Último Despacho</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 text-sm">
             {productos.map((prod) => {
-              // Simulación de la función fn_VerificarAlertaStock de MySQL
-              const esCritico = prod.existencias < prod.stockCritico;
+              // Aquí la lógica imita lo que hace tu función fn_VerificarAlertaStock
+              const esCritico = prod.cantidadActual <= prod.stockCritico;
               return (
                 <tr 
-                  key={prod.id} 
+                  key={prod.idProducto} 
                   className={`transition-colors ${esCritico ? 'bg-red-50 text-red-900 font-medium' : 'hover:bg-gray-50'}`}
                 >
-                  <td className="p-4">{prod.id}</td>
+                  <td className="p-4">{prod.codigo}</td>
                   <td className="p-4 flex items-center space-x-2">
                     {prod.nombre}
                     {esCritico && (
@@ -63,14 +73,17 @@ export default function Monitoreo() {
                       </span>
                     )}
                   </td>
-                  <td className="p-4 text-gray-600">{prod.ubicacion}</td>
-                  <td className="p-4 text-center font-bold">{prod.existencias}</td>
+                  <td className="p-4 text-gray-600">{`${prod.bodega} - ${prod.pasillo} - ${prod.estante}`}</td>
+                  <td className="p-4 text-center font-bold">{prod.cantidadActual}</td>
                   <td className="p-4 text-center text-gray-500">{prod.stockCritico}</td>
-                  <td className="p-4 text-gray-600">{prod.ultimoIngreso}</td>
-                  <td className="p-4 text-gray-600">{prod.ultimoDespacho}</td>
                 </tr>
               );
             })}
+            {productos.length === 0 && (
+              <tr>
+                <td colSpan={5} className="p-6 text-center text-gray-500">Cargando datos desde el servidor o inventario vacío...</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

@@ -1,54 +1,89 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../services/api';
 
 interface Cliente {
-  id: number;
+  idCliente: number;
   nombre: string;
-  rol: 'origen' | 'destino' | 'ambos';
-  tieneMovimientos: boolean;
+  telefono: string | null;
+  correo: string | null;
+  direccion: string | null;
+  rolCliente: 'ORIGEN' | 'DESTINO' | 'AMBOS';
 }
 
 export default function Clientes() {
-  const [clientes, setClientes] = useState<Cliente[]>([
-    { id: 1, nombre: 'TechImport S.A.', rol: 'origen', tieneMovimientos: true },
-    { id: 2, nombre: 'Almacenes del Istmo', rol: 'destino', tieneMovimientos: true },
-    { id: 3, nombre: 'Distribuidora Global CR', rol: 'ambos', tieneMovimientos: false },
-  ]);
-
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [nombre, setNombre] = useState('');
-  const [rol, setRol] = useState<'origen' | 'destino' | 'ambos'>('origen');
+  const [rolCliente, setRolCliente] = useState<'ORIGEN' | 'DESTINO' | 'AMBOS'>('ORIGEN');
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // 1. READ: Cargar clientes al iniciar
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
+    cargarClientes();
+  }, []);
+
+  const cargarClientes = async () => {
+    try {
+      const response = await api.get('/Clientes'); // Ajusta a '/Clientes' si tu controller está en plural
+      setClientes(response.data);
+    } catch (err) {
+      console.error('Error cargando clientes:', err);
+      setError('No se pudo conectar con el servidor.');
+    }
+  };
+
+  // 2. CREATE / UPDATE
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombre.trim()) {
-      setError('El nombre del cliente no puede estar vacío.'); // Validación
+      setError('El nombre del cliente no puede estar vacío.');
       return;
     }
     setError('');
 
-    if (editandoId) {
-      setClientes(clientes.map(c => c.id === editandoId ? { ...c, nombre, rol } : c));
+    const payload = { nombre, rolCliente };
+
+    try {
+      if (editandoId) {
+        // UPDATE
+        await api.put(`/Clientes/${editandoId}`, { idCliente: editandoId, ...payload });
+      } else {
+        // CREATE
+        await api.post('/Clientes', payload);
+      }
+      
+      // Recargar la tabla y limpiar formulario
+      await cargarClientes();
       setEditandoId(null);
-    } else {
-      setClientes([...clientes, { id: Date.now(), nombre, rol, tieneMovimientos: false }]);
+      setNombre('');
+      setRolCliente('ORIGEN');
+    } catch (err) {
+      console.error('Error guardando cliente:', err);
+      setError('Hubo un error al guardar el cliente.');
     }
-    setNombre('');
-    setRol('origen');
   };
 
   const iniciarEdicion = (cliente: Cliente) => {
-    setEditandoId(cliente.id);
+    setEditandoId(cliente.idCliente);
     setNombre(cliente.nombre);
-    setRol(cliente.rol);
+    setRolCliente(cliente.rolCliente);
   };
 
-  const eliminarCliente = (id: number, tieneMovimientos: boolean) => {
-    if (tieneMovimientos) {
-      alert('Error: No se pueden eliminar clientes que tengan movimientos asociados.'); // Restricción estricta
-      return;
+  // 3. DELETE
+  const eliminarCliente = async (id: number) => {
+    if (!window.confirm('¿Está seguro de eliminar este cliente?')) return;
+    
+    try {
+      await api.delete(`/Cliente/${id}`);
+      await cargarClientes();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      console.error('Error eliminando cliente:', err);
+      if (err.response?.status === 500 || err.response?.status === 400) {
+        alert('Error: No se puede eliminar un cliente que tiene recepciones o despachos asociados (Integridad Referencial).');
+      }
     }
-    setClientes(clientes.filter(c => c.id !== id));
   };
 
   return (
@@ -72,13 +107,14 @@ export default function Clientes() {
           <div>
             <label className="block text-sm font-medium text-gray-700">Rol Operativo</label>
             <select
-              value={rol}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRol(e.target.value as Cliente['rol'])}
+              value={rolCliente}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              onChange={(e: any) => setRolCliente(e.target.value)}
               className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-slate-500 focus:border-slate-500"
             >
-              <option value="origen">Origen (Solo Ingresos)</option>
-              <option value="destino">Destino (Solo Salidas)</option>
-              <option value="ambos">Ambos Roles</option>
+              <option value="ORIGEN">Origen (Solo Ingresos)</option>
+              <option value="DESTINO">Destino (Solo Salidas)</option>
+              <option value="AMBOS">Ambos Roles</option>
             </select>
           </div>
           {error && <p className="text-sm text-red-600 bg-red-50 p-2 border border-red-200 rounded">{error}</p>}
@@ -109,23 +145,19 @@ export default function Clientes() {
           </thead>
           <tbody className="divide-y divide-gray-200 text-sm">
             {clientes.map(c => (
-              <tr key={c.id} className="hover:bg-gray-50">
-                <td className="p-3 text-gray-500">#{c.id.toString().slice(-4)}</td>
+              <tr key={c.idCliente} className="hover:bg-gray-50">
+                <td className="p-3 text-gray-500">#{c.idCliente.toString().padStart(4, '0')}</td>
                 <td className="p-3 font-medium text-slate-800">{c.nombre}</td>
                 <td className="p-3">
                   <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                    c.rol === 'origen' ? 'bg-blue-100 text-blue-800' : c.rol === 'destino' ? 'bg-orange-100 text-orange-800' : 'bg-purple-100 text-purple-800'
+                    c.rolCliente === 'ORIGEN' ? 'bg-blue-100 text-blue-800' : c.rolCliente === 'DESTINO' ? 'bg-orange-100 text-orange-800' : 'bg-purple-100 text-purple-800'
                   }`}>
-                    {c.rol.toUpperCase()}
+                    {c.rolCliente}
                   </span>
                 </td>
                 <td className="p-3 text-right space-x-2">
                   <button onClick={() => iniciarEdicion(c)} className="text-slate-600 hover:text-slate-900 font-medium">Modificar</button>
-                  <button 
-                    onClick={() => eliminarCliente(c.id, c.tieneMovimientos)} 
-                    className={`font-medium ${c.tieneMovimientos ? 'text-gray-300 cursor-not-allowed' : 'text-red-600 hover:text-red-800'}`}
-                    title={c.tieneMovimientos ? "Bloqueado por integridad referencial (tiene movimientos)" : ""}
-                  >
+                  <button onClick={() => eliminarCliente(c.idCliente)} className="text-red-600 hover:text-red-800 font-medium">
                     Eliminar
                   </button>
                 </td>
