@@ -10,6 +10,9 @@ interface Producto {
   estante: string;
   cantidadActual: number;
   stockCritico: number;
+  ultimoIngreso: string | null;
+  ultimoDespacho: string | null;
+  estadoAlerta: string;
 }
 
 export default function Monitoreo() {
@@ -18,18 +21,29 @@ export default function Monitoreo() {
   useEffect(() => {
     const cargarInventario = async () => {
       try {
-        const response = await api.get('/Productos'); // Ajusta a '/Productos' si aplica
+        const response = await api.get('/Productos');
         setProductos(response.data);
       } catch (error) {
-        console.error("Error al cargar inventario", error);
+        console.error(error);
       }
     };
+    
     cargarInventario();
     
-    // Opcional: Polling cada 10 segundos para ver cambios en "tiempo real"
     const interval = setInterval(cargarInventario, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const formatearFecha = (fecha: string | null) => {
+    if (!fecha) return 'Sin registros';
+    return new Date(fecha).toLocaleString('es-CR', { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -44,21 +58,22 @@ export default function Monitoreo() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <table className="w-full text-left border-collapse">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden overflow-x-auto">
+        <table className="w-full text-left border-collapse min-w-max">
           <thead className="bg-slate-700 text-white text-sm font-semibold">
             <tr>
               <th className="p-4">Código</th>
               <th className="p-4">Producto</th>
               <th className="p-4">Ubicación Física</th>
+              <th className="p-4 text-center">Último Ingreso</th>
+              <th className="p-4 text-center">Último Despacho</th>
               <th className="p-4 text-center">Existencias</th>
               <th className="p-4 text-center">Stock Mínimo</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 text-sm">
             {productos.map((prod) => {
-              // Aquí la lógica imita lo que hace tu función fn_VerificarAlertaStock
-              const esCritico = prod.cantidadActual <= prod.stockCritico;
+              const esCritico = prod.estadoAlerta === 'REORDEN';
               return (
                 <tr 
                   key={prod.idProducto} 
@@ -66,7 +81,7 @@ export default function Monitoreo() {
                 >
                   <td className="p-4">{prod.codigo}</td>
                   <td className="p-4 flex items-center space-x-2">
-                    {prod.nombre}
+                    <span>{prod.nombre}</span>
                     {esCritico && (
                       <span className="px-2 py-0.5 text-xs bg-red-200 text-red-800 rounded-full animate-pulse">
                         ⚠️ REORDEN
@@ -74,6 +89,8 @@ export default function Monitoreo() {
                     )}
                   </td>
                   <td className="p-4 text-gray-600">{`${prod.bodega} - ${prod.pasillo} - ${prod.estante}`}</td>
+                  <td className="p-4 text-center text-gray-600">{formatearFecha(prod.ultimoIngreso)}</td>
+                  <td className="p-4 text-center text-gray-600">{formatearFecha(prod.ultimoDespacho)}</td>
                   <td className="p-4 text-center font-bold">{prod.cantidadActual}</td>
                   <td className="p-4 text-center text-gray-500">{prod.stockCritico}</td>
                 </tr>
@@ -81,7 +98,7 @@ export default function Monitoreo() {
             })}
             {productos.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-6 text-center text-gray-500">Cargando datos desde el servidor o inventario vacío...</td>
+                <td colSpan={7} className="p-6 text-center text-gray-500">Cargando datos desde el servidor o inventario vacío...</td>
               </tr>
             )}
           </tbody>
