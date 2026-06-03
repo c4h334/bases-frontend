@@ -75,7 +75,8 @@ export default function Recepcion() {
 
   const cargarHistorial = async (idProducto: number) => {
     try {
-      const res = await api.get(`/Recepcion/Producto/${idProducto}`);
+      // 1. CORRECCIÓN: La ruta del controlador en C# está en plural y minúscula
+      const res = await api.get(`/Recepciones/producto/${idProducto}`);
       setHistorial(res.data);
     } catch (err) {
       console.error(err);
@@ -153,18 +154,20 @@ export default function Recepcion() {
     }
     
     try {
-      await api.post('/Recepcion', {
+      // 2. CORRECCIÓN: Consumir el endpoint del Procedure con las propiedades exactas requeridas
+      await api.post('/Recepciones/registrar-sp', {
         idProducto: productoSeleccionado?.idProducto,
         idCliente: parseInt(formRecepcion.idCliente),
         numeroLote: formRecepcion.numeroLote,
-        cantidadEntrante: formRecepcion.cantidad,
-        usuarioAtencion: 'Sistema' 
+        cantidad: formRecepcion.cantidad, 
+        usuarioAtendio: 'amonge' // Usamos un usuario real de tu BD (Anderson) en lugar de 'Sistema' para mantener la integridad en los reportes
       });
-      alert('Lote recibido y stock actualizado con éxito.');
+      alert('Lote recibido y stock actualizado con éxito mediante Base de Datos.');
       setVista('lista');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError('Error al registrar la recepción del lote.');
+      // Capturamos el error limpio que devuelve MySQL (ej. si la cantidad es menor a 0)
+      setError(err.response?.data?.message || 'Error al registrar la recepción del lote.');
     }
   };
 
