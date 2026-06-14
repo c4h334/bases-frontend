@@ -11,81 +11,62 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!username.trim() || !password.trim()) {
-      setError('Por favor, ingrese su usuario y contraseña.');
+      setError('Ingrese usuario y contraseña.');
       return;
     }
-
     setError('');
     setCargando(true);
-
     try {
-      const response = await api.post('/Auth/login', {
-        username: username.trim(),
-        password: password
-      });
-
-      localStorage.setItem('operario_username', response.data.username);
+      const res = await api.post('/Auth/login', { username: username.trim(), password });
+      localStorage.setItem('operario_username', res.data.username);
       navigate('/monitoreo');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      console.error('Error de login:', err);
-      if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message);
-      } else {
-        setError('No se pudo conectar con el servidor de autenticación.');
-      }
+      setError(err.response?.data?.message || 'No se pudo conectar con el servidor.');
     } finally {
       setCargando(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-800">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-2xl">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-slate-800">LogiChain Solutions</h1>
-          <p className="mt-2 text-sm text-gray-500">Sistema de Gestión de Inventario (SGID)</p>
-        </div>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f0f0f0' }}>
+      <div style={{ background: '#fff', border: '1px solid #ccc', padding: '2rem', width: '320px' }}>
+        <h1 style={{ marginBottom: '0.25rem' }}>LogiChain Solutions</h1>
+        <p style={{ color: '#666', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Sistema de Gestión de Inventario — SGID</p>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Usuario de Base de Datos</label>
+        <form onSubmit={handleLogin}>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.25rem' }}>Usuario de BD</label>
             <input
               type="text"
-              disabled={cargando}
-              className="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-slate-500 focus:border-slate-500 disabled:bg-gray-100"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ej: amonge, joviedo"
+              onChange={e => setUsername(e.target.value)}
+              disabled={cargando}
+              placeholder="Ej: joviedo, amonge"
+              style={{ width: '100%', padding: '0.4rem', border: '1px solid #ccc', boxSizing: 'border-box' }}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Contraseña del Servidor</label>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.25rem' }}>Contraseña</label>
             <input
               type="password"
-              disabled={cargando}
-              className="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-slate-500 focus:border-slate-500 disabled:bg-gray-100"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              onChange={e => setPassword(e.target.value)}
+              disabled={cargando}
+              style={{ width: '100%', padding: '0.4rem', border: '1px solid #ccc', boxSizing: 'border-box' }}
             />
           </div>
 
-          {error && (
-            <div className="p-3 text-sm text-red-700 bg-red-100 border border-red-400 rounded">
-              {error}
-            </div>
-          )}
+          {error && <p style={{ color: 'red', marginBottom: '0.75rem', fontSize: '0.85rem' }}>{error}</p>}
 
           <button
             type="submit"
             disabled={cargando}
-            className="w-full px-4 py-2 text-white transition-colors bg-slate-700 rounded-lg hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:bg-slate-400"
+            style={{ width: '100%', padding: '0.5rem', background: '#333', color: '#fff', border: 'none', cursor: cargando ? 'not-allowed' : 'pointer' }}
           >
-            {cargando ? 'Verificando con MySQL...' : 'Iniciar Sesión'}
+            {cargando ? 'Verificando...' : 'Iniciar Sesión'}
           </button>
         </form>
       </div>

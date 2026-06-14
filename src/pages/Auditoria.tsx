@@ -1,74 +1,99 @@
-﻿import { useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState } from 'react';
 import api from '../services/api';
 
 export default function Auditoria() {
-    const [codigo, setCodigo] = useState('');
-    const [fechaInicio, setFechaInicio] = useState('');
-    const [fechaFin, setFechaFin] = useState('');
-    const [movimientos, setMovimientos] = useState([]);
-    const [logs, setLogs] = useState([]);
-    const [error, setError] = useState('');
+  const [codigo, setCodigo] = useState('');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
+  const [movimientos, setMovimientos] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [error, setError] = useState('');
 
-    const buscar = async () => {
-        setError('');
-        const query = `?codigo=${codigo}${fechaInicio ? `&fechaInicio=${fechaInicio}` : ''}${fechaFin ? `&fechaFin=${fechaFin}` : ''}`;
-        
-        try {
-            // CORRECCIÓN: Utilizamos la instancia 'api' para apuntar al backend C#
-            const resMov = await api.get(`/AuditoriaProductos/movimientos${query}`);
-            setMovimientos(resMov.data);
-            
-            const resLog = await api.get(`/AuditoriaProductos/log-auditoria${query}`);
-            setLogs(resLog.data);
-        } catch (e: any) {
-            setError(e.response?.data?.message || 'Error de conexión al servidor.');
-        }
-    };
+  const buscar = async () => {
+    setError('');
+    if (!codigo.trim()) { setError('Ingrese un código de producto.'); return; }
+    const query = `?codigo=${codigo}${fechaInicio ? `&fechaInicio=${fechaInicio}` : ''}${fechaFin ? `&fechaFin=${fechaFin}` : ''}`;
+    try {
+      setMovimientos((await api.get(`/AuditoriaProductos/movimientos${query}`)).data);
+      // Consulta el log generado por tg_AuditoriaInventario
+      setLogs((await api.get(`/AuditoriaProductos/log-auditoria${query}`)).data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Error al buscar.');
+      setMovimientos([]); setLogs([]);
+    }
+  };
 
-    return (
-        <div className="p-6">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Auditoría y Trazabilidad</h2>
-            
-            <div className="flex flex-wrap gap-4 mb-8 bg-gray-50 p-4 rounded-lg border">
-                <input type="text" placeholder="Código de Producto" value={codigo} onChange={e => setCodigo(e.target.value)} className="border p-2 rounded w-64" />
-                <input type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} className="border p-2 rounded" />
-                <input type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} className="border p-2 rounded" />
-                <button onClick={buscar} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">Buscar Historial</button>
-            </div>
-            
-            {error && <p className="text-red-500 mb-4">{error}</p>}
+  const s = { input: { padding: '0.4rem', border: '1px solid #ccc' }, btn: { padding: '0.4rem 1rem', background: '#333', color: '#fff', border: 'none', cursor: 'pointer' } };
 
-            <h3 className="text-xl font-semibold mb-4">Movimientos del Producto</h3>
-            <div className="overflow-x-auto shadow-md sm:rounded-lg mb-8">
-                <table className="w-full text-sm text-left text-gray-700 border">
-                    <thead className="text-xs uppercase bg-gray-800 text-white">
-                        <tr><th className="px-6 py-3">Fecha</th><th className="px-6 py-3">Tipo</th><th className="px-6 py-3">Cliente</th><th className="px-6 py-3">Cantidad</th><th className="px-6 py-3">Usuario</th></tr>
-                    </thead>
-                    <tbody>
-                        {movimientos.map((m: any, i) => (
-                            <tr key={i} className="border-b" style={{ backgroundColor: m.tipo === 'Recepción' ? '#dbeafe' : '#ffedd5' }}>
-                                <td className="px-6 py-4">{new Date(m.fecha).toLocaleString()}</td><td className="px-6 py-4 font-bold">{m.tipo}</td><td className="px-6 py-4">{m.cliente}</td><td className="px-6 py-4">{m.cantidad}</td><td className="px-6 py-4">{m.usuario}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+  return (
+    <div style={{ padding: '1.5rem' }}>
+      <h2>Auditoría y Trazabilidad</h2>
+      <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '1rem' }}>
+        Los registros de "Log de auditoría" son generados automáticamente por el trigger <strong>tg_AuditoriaInventario</strong>.
+      </p>
 
-            <h3 className="text-xl font-semibold mb-4">Log de Auditoría (Trigger)</h3>
-            <div className="overflow-x-auto shadow-md sm:rounded-lg mb-8">
-                <table className="w-full text-sm text-left text-gray-700 border">
-                    <thead className="text-xs uppercase bg-gray-800 text-white">
-                        <tr><th className="px-6 py-3">Fecha</th><th className="px-6 py-3">Cant. Anterior</th><th className="px-6 py-3">Cant. Nueva</th><th className="px-6 py-3">Efecto</th><th className="px-6 py-3">Usuario</th></tr>
-                    </thead>
-                    <tbody>
-                        {logs.map((l: any, i) => (
-                            <tr key={i} className="border-b" style={{ backgroundColor: l.efecto === 'Incremento' ? '#dcfce7' : '#fee2e2' }}>
-                                <td className="px-6 py-4">{new Date(l.fecha).toLocaleString()}</td><td className="px-6 py-4">{l.cantidadAnterior}</td><td className="px-6 py-4">{l.cantidadNueva}</td><td className="px-6 py-4 font-bold">{l.efecto}</td><td className="px-6 py-4">{l.usuario}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
+      {/* Filtros */}
+      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+        <label>
+          Código de producto
+          <br />
+          <input style={s.input} value={codigo} onChange={e => setCodigo(e.target.value)} placeholder="Ej: PROD-001" />
+        </label>
+        <label>
+          Fecha inicio
+          <br />
+          <input style={s.input} type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} />
+        </label>
+        <label>
+          Fecha fin
+          <br />
+          <input style={s.input} type="date" value={fechaFin} onChange={e => setFechaFin(e.target.value)} />
+        </label>
+        <button style={s.btn} onClick={buscar}>Buscar</button>
+      </div>
+
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {/* Movimientos */}
+      <h3>Movimientos del producto</h3>
+      <table border={1} cellPadding={5} cellSpacing={0} style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+        <thead style={{ background: '#eee' }}>
+          <tr><th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Cantidad</th><th>Usuario</th></tr>
+        </thead>
+        <tbody>
+          {movimientos.map((m, i) => (
+            <tr key={i} style={{ background: m.tipo === 'Recepción' ? '#dbeafe' : '#ffedd5' }}>
+              <td>{new Date(m.fecha).toLocaleString('es-CR')}</td>
+              <td><strong>{m.tipo}</strong></td>
+              <td>{m.cliente}</td>
+              <td>{m.cantidad}</td>
+              <td>{m.usuario}</td>
+            </tr>
+          ))}
+          {movimientos.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: '#999' }}>Sin resultados.</td></tr>}
+        </tbody>
+      </table>
+
+      {/* Log del trigger */}
+      <h3>Log de auditoría — trigger <code>tg_AuditoriaInventario</code></h3>
+      <table border={1} cellPadding={5} cellSpacing={0} style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+        <thead style={{ background: '#eee' }}>
+          <tr><th>Fecha</th><th>Cant. anterior</th><th>Cant. nueva</th><th>Efecto</th><th>Usuario</th></tr>
+        </thead>
+        <tbody>
+          {logs.map((l, i) => (
+            <tr key={i} style={{ background: l.efecto === 'Incremento' ? '#dcfce7' : '#fee2e2' }}>
+              <td>{new Date(l.fecha).toLocaleString('es-CR')}</td>
+              <td style={{ textAlign: 'center' }}>{l.cantidadAnterior}</td>
+              <td style={{ textAlign: 'center' }}>{l.cantidadNueva}</td>
+              <td><strong>{l.efecto}</strong></td>
+              <td>{l.usuario}</td>
+            </tr>
+          ))}
+          {logs.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: '#999' }}>Sin registros del trigger.</td></tr>}
+        </tbody>
+      </table>
+    </div>
+  );
 }

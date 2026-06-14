@@ -1,269 +1,192 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
 export default function Despacho() {
   const [vista, setVista] = useState<'lista' | 'nuevo'>('lista');
-  const [despachos, setDespachos] = useState([]);
-  const [clientes, setClientes] = useState([]);
-  const [productos, setProductos] = useState([]);
-  const [error, setError] = useState('');
-
-  // Estados para el formulario de nuevo despacho
-  const [idClienteSel, setIdClienteSel] = useState('');
+  const [despachos, setDespachos] = useState<any[]>([]);
+  const [clientes, setClientes] = useState<any[]>([]);
+  const [productos, setProductos] = useState<any[]>([]);
   const [carrito, setCarrito] = useState<any[]>([]);
+  const [idClienteSel, setIdClienteSel] = useState('');
   const [itemProd, setItemProd] = useState('');
   const [itemCant, setItemCant] = useState(1);
+  const [error, setError] = useState('');
+  const operario = localStorage.getItem('operario_username') || 'sistema';
 
   useEffect(() => {
-    if (vista === 'lista') {
-      cargarDespachos();
-    } else {
-      cargarCatalogos();
-    }
+    if (vista === 'lista') cargarDespachos();
+    else cargarCatalogos();
   }, [vista]);
 
   const cargarDespachos = async () => {
-    try {
-      const res = await api.get('/Despachos');
-      setDespachos(res.data);
-    } catch (err) {
-      setError('Error al cargar los despachos.');
-    }
+    try { setDespachos((await api.get('/Despachos')).data); }
+    catch { setError('Error al cargar despachos.'); }
   };
 
   const cargarCatalogos = async () => {
     try {
-      const resC = await api.get('/Clientes');
-      // Filtrar solo los clientes que pueden recibir mercancía
-      setClientes(resC.data.filter((c: any) => c.rolCliente === 'DESTINO' || c.rolCliente === 'AMBOS'));
-      
-      const resP = await api.get('/Productos');
-      setProductos(resP.data);
-    } catch (err) {
-      setError('Error al cargar catálogos.');
-    }
+      const rc = await api.get('/Clientes');
+      setClientes(rc.data.filter((c: any) => c.rolCliente === 'DESTINO' || c.rolCliente === 'AMBOS'));
+      setProductos((await api.get('/Productos')).data);
+    } catch { setError('Error al cargar catálogos.'); }
   };
 
-  const procesarDespachoSP = async (idDespacho: number, idCliente: number) => {
-    if (!window.confirm('¿Está seguro de procesar este despacho? El SP evaluará el stock inmediatamente.')) return;
-    
+  const procesarSP = async (idDespacho: number, idCliente: number) => {
+    if (!window.confirm(`¿Ejecutar sp_ProcesarDespacho para despacho #${idDespacho}?`)) return;
     try {
       const res = await api.post(`/Despachos/${idDespacho}/procesar-sp`, { idCliente });
-      alert(res.data.message || 'Despacho procesado exitosamente por la Base de Datos.');
+      alert(res.data.message);
       cargarDespachos();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Error de integridad al procesar el despacho.');
-      // Recargar para ver si el SP lo pasó a CANCELADO
+      alert(err.response?.data?.message || 'Error al procesar.');
       cargarDespachos();
     }
-  };
-
-  // --- LÓGICA DE CREACIÓN DE DESPACHO ---
-  const abrirNuevoDespacho = () => {
-    setIdClienteSel('');
-    setCarrito([]);
-    setItemProd('');
-    setItemCant(1);
-    setError('');
-    setVista('nuevo');
   };
 
   const agregarAlCarrito = () => {
     if (!itemProd || itemCant <= 0) return;
-    const productoInfo: any = productos.find((p: any) => p.idProducto.toString() === itemProd);
-    if (!productoInfo) return;
-
-    // Verificar si ya está en el carrito para sumar o agregar nuevo
+    const prod = productos.find(p => p.idProducto.toString() === itemProd);
+    if (!prod) return;
     const existe = carrito.find(c => c.idProducto.toString() === itemProd);
     if (existe) {
       setCarrito(carrito.map(c => c.idProducto.toString() === itemProd ? { ...c, cantidad: c.cantidad + itemCant } : c));
     } else {
-      setCarrito([...carrito, { idProducto: productoInfo.idProducto, nombre: productoInfo.nombre, codigo: productoInfo.codigo, cantidad: itemCant }]);
+      setCarrito([...carrito, { idProducto: prod.idProducto, nombre: prod.nombre, codigo: prod.codigo, cantidad: itemCant }]);
     }
-    
-    setItemProd('');
-    setItemCant(1);
+    setItemProd(''); setItemCant(1);
   };
 
-  const quitarDelCarrito = (idProd: number) => {
-    setCarrito(carrito.filter(c => c.idProducto !== idProd));
-  };
-
-  const guardarOrdenCompleta = async () => {
-    if (!idClienteSel) return setError('Debe seleccionar un cliente destino.');
-    if (carrito.length === 0) return setError('El carrito no puede estar vacío.');
-
+  const guardarOrden = async () => {
+    if (!idClienteSel) { setError('Seleccione un cliente destino.'); return; }
+    if (carrito.length === 0) { setError('El carrito está vacío.'); return; }
     try {
-      // 1. Crear el encabezado del Despacho (Queda PENDIENTE por defecto)
-      const resDespacho = await api.post('/Despachos', {
+      const res = await api.post('/Despachos', {
         idCliente: parseInt(idClienteSel),
         fechaDespacho: new Date().toISOString(),
         estado: 'PENDIENTE',
-        operario: 'amonge' // Usuario de tu BD
+        operario
       });
-
-      const nuevoIdDespacho = resDespacho.data.idDespacho;
-
-      // 2. Insertar los productos en la tabla CARRITO_DESPACHO
+      const nuevoId = res.data.idDespacho;
       for (const item of carrito) {
-        await api.post('/CarritosDespacho', {
-          idDespacho: nuevoIdDespacho,
-          idProducto: item.idProducto,
-          cantidad: item.cantidad
-        });
+        await api.post('/CarritosDespacho', { idDespacho: nuevoId, idProducto: item.idProducto, cantidad: item.cantidad });
       }
-
-      alert('Orden PENDIENTE creada. Ahora puede ejecutar el Stored Procedure para procesarla.');
+      alert('Orden guardada en estado PENDIENTE. Ejecute el SP desde el listado.');
       setVista('lista');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al guardar la orden.');
-    }
+    } catch (err: any) { setError(err.response?.data?.message || 'Error al guardar orden.'); }
   };
 
+  const s = { btn: (color = '#333') => ({ padding: '0.4rem 0.9rem', background: color, color: '#fff', border: 'none', cursor: 'pointer', marginRight: '0.5rem' }), input: { padding: '0.4rem', border: '1px solid #ccc', width: '100%', boxSizing: 'border-box' as const } };
+
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md min-h-[80vh]">
-      
+    <div style={{ padding: '1.5rem' }}>
+
+      {/* VISTA 1 — Listado de despachos */}
       {vista === 'lista' && (
         <>
-          <div className="flex justify-between items-center border-b pb-4 mb-4">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-800">Módulo de Distribución (Despachos)</h2>
-              <p className="text-sm text-gray-500">Historial de la última semana y ejecución transaccional</p>
-            </div>
-            <button onClick={abrirNuevoDespacho} className="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-700 font-medium">
-              + Nueva Orden de Despacho
-            </button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <h2 style={{ margin: 0 }}>Módulo de Despachos</h2>
+            <button style={s.btn()} onClick={() => { setCarrito([]); setIdClienteSel(''); setError(''); setVista('nuevo'); }}>+ Nueva orden</button>
           </div>
-
-          {error && <div className="mb-4 text-red-600 bg-red-50 p-3 rounded text-sm">{error}</div>}
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-slate-100 text-slate-700 text-sm font-semibold">
-                <tr>
-                  <th className="p-3">ID Despacho</th>
-                  <th className="p-3">Cliente Destino</th>
-                  <th className="p-3">Fecha de Orden</th>
-                  <th className="p-3">Estado</th>
-                  <th className="p-3">Operario</th>
-                  <th className="p-3 text-center">Acción Transaccional</th>
+          <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+            El botón <strong>Ejecutar SP</strong> lanza <strong>sp_ProcesarDespacho</strong> con transacción ACID sobre la BD.
+          </p>
+          {error && <p style={{ color: 'red' }}>{error}</p>}
+          <table border={1} cellPadding={5} cellSpacing={0} style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+            <thead style={{ background: '#eee' }}>
+              <tr><th>ID</th><th>Cliente destino</th><th>Fecha</th><th>Estado</th><th>Operario</th><th>Acción SP</th></tr>
+            </thead>
+            <tbody>
+              {despachos.map(d => (
+                <tr key={d.idDespacho} style={{ background: d.estado === 'CANCELADO' ? '#ffe0e0' : d.estado === 'PROCESADO' ? '#e0ffe0' : 'transparent' }}>
+                  <td>#{d.idDespacho}</td>
+                  <td>{d.cliente?.nombre || '—'}</td>
+                  <td>{new Date(d.fechaDespacho).toLocaleString('es-CR')}</td>
+                  <td><strong>{d.estado}</strong></td>
+                  <td>{d.operario}</td>
+                  <td>
+                    {d.estado === 'PENDIENTE' && (
+                      <button style={s.btn('#d6610a')} onClick={() => procesarSP(d.idDespacho, d.idCliente)}>
+                        Ejecutar SP
+                      </button>
+                    )}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 text-sm">
-                {despachos.map((d: any) => (
-                  <tr key={d.idDespacho} className="hover:bg-gray-50">
-                    <td className="p-3 font-medium">#{d.idDespacho}</td>
-                    <td className="p-3">{d.cliente?.nombre || 'N/A'}</td>
-                    <td className="p-3">{new Date(d.fechaDespacho).toLocaleString('es-CR')}</td>
-                    <td className="p-3">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${d.estado === 'PROCESADO' ? 'bg-green-100 text-green-800' : d.estado === 'CANCELADO' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                        {d.estado}
-                      </span>
-                    </td>
-                    <td className="p-3 text-gray-600">{d.operario}</td>
-                    <td className="p-3 text-center">
-                      {d.estado === 'PENDIENTE' && (
-                        <button 
-                          onClick={() => procesarDespachoSP(d.idDespacho, d.idCliente)} 
-                          className="bg-orange-500 text-white px-4 py-1 rounded hover:bg-orange-600 font-medium"
-                        >
-                          Ejecutar SP (Procesar)
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {despachos.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-gray-500">No hay despachos recientes.</td></tr>}
-              </tbody>
-            </table>
-          </div>
+              ))}
+              {despachos.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', color: '#999' }}>Sin despachos recientes.</td></tr>}
+            </tbody>
+          </table>
         </>
       )}
 
+      {/* VISTA 2 — Nueva orden (carrito) */}
       {vista === 'nuevo' && (
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="border-b pb-4 mb-4 flex justify-between items-center">
-            <div>
-              <h2 className="text-xl font-bold text-slate-800">Crear Orden de Despacho (Carrito)</h2>
-              <p className="text-sm text-gray-500">Agregue los productos a despachar. La orden quedará PENDIENTE hasta ejecutar el SP.</p>
-            </div>
-            <button onClick={() => setVista('lista')} className="text-slate-500 hover:text-slate-800 underline">
-              Volver al historial
-            </button>
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 style={{ margin: 0 }}>Nueva orden de despacho</h2>
+            <button style={s.btn('#888')} onClick={() => setVista('lista')}>Volver</button>
           </div>
+          <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '1rem' }}>La orden se guarda en PENDIENTE. El SP la procesa y descuenta inventario.</p>
+          {error && <p style={{ color: 'red' }}>{error}</p>}
 
-          {error && <div className="mb-4 text-red-600 bg-red-50 p-3 rounded text-sm">{error}</div>}
-
-          <div className="grid grid-cols-3 gap-6">
-            {/* Formulario de Cabecera y Agregar Items */}
-            <div className="col-span-1 space-y-4 bg-slate-50 p-4 rounded border">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Cliente Destino</label>
-                <select value={idClienteSel} onChange={e => setIdClienteSel(e.target.value)} className="w-full mt-1 border rounded p-2 text-sm">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem' }}>
+            {/* Panel izquierdo */}
+            <div style={{ border: '1px solid #ccc', padding: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.75rem' }}>
+                Cliente destino
+                <select style={s.input} value={idClienteSel} onChange={e => setIdClienteSel(e.target.value)}>
                   <option value="">Seleccione...</option>
-                  {clientes.map((c: any) => <option key={c.idCliente} value={c.idCliente}>{c.nombre}</option>)}
+                  {clientes.map(c => <option key={c.idCliente} value={c.idCliente}>{c.nombre}</option>)}
                 </select>
-              </div>
-
-              <div className="pt-4 border-t border-gray-200 mt-4">
-                <h3 className="font-semibold text-slate-700 mb-2">Agregar al Carrito</h3>
-                <label className="block text-sm font-medium text-gray-700">Producto</label>
-                <select value={itemProd} onChange={e => setItemProd(e.target.value)} className="w-full mt-1 border rounded p-2 text-sm mb-3">
-                  <option value="">Seleccione producto...</option>
-                  {productos.map((p: any) => <option key={p.idProducto} value={p.idProducto}>{p.codigo} - {p.nombre}</option>)}
+              </label>
+              <label style={{ display: 'block', marginBottom: '0.75rem' }}>
+                Operario
+                <input style={{ ...s.input, background: '#f5f5f5' }} value={operario} readOnly />
+              </label>
+              <hr />
+              <p style={{ marginBottom: '0.5rem' }}><strong>Agregar producto</strong></p>
+              <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+                Producto
+                <select style={s.input} value={itemProd} onChange={e => setItemProd(e.target.value)}>
+                  <option value="">Seleccione...</option>
+                  {productos.map(p => <option key={p.idProducto} value={p.idProducto}>{p.codigo} — {p.nombre}</option>)}
                 </select>
-
-                <label className="block text-sm font-medium text-gray-700">Cantidad a Despachar</label>
-                <input type="number" min="1" value={itemCant} onChange={e => setItemCant(parseInt(e.target.value))} className="w-full mt-1 border rounded p-2 text-sm mb-3" />
-
-                <button onClick={agregarAlCarrito} className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-medium text-sm">
-                  Añadir al carrito
-                </button>
-              </div>
+              </label>
+              <label style={{ display: 'block', marginBottom: '0.75rem' }}>
+                Cantidad
+                <input style={s.input} type="number" min={1} value={itemCant} onChange={e => setItemCant(parseInt(e.target.value))} />
+              </label>
+              <button style={s.btn('#37a')} onClick={agregarAlCarrito}>Añadir</button>
             </div>
 
-            {/* Vista del Carrito */}
-            <div className="col-span-2">
-              <h3 className="font-semibold text-slate-700 mb-2">Contenido de la Orden</h3>
-              <div className="bg-white border rounded shadow-sm min-h-[250px]">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-100 text-slate-700">
-                    <tr>
-                      <th className="p-2 border-b">Código</th>
-                      <th className="p-2 border-b">Producto</th>
-                      <th className="p-2 border-b text-center">Cant. Solicitada</th>
-                      <th className="p-2 border-b text-center">Acción</th>
+            {/* Panel derecho — carrito */}
+            <div>
+              <p><strong>Contenido de la orden</strong></p>
+              <table border={1} cellPadding={5} cellSpacing={0} style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <thead style={{ background: '#eee' }}>
+                  <tr><th>Código</th><th>Producto</th><th>Cantidad</th><th>Quitar</th></tr>
+                </thead>
+                <tbody>
+                  {carrito.map((c, i) => (
+                    <tr key={i}>
+                      <td>{c.codigo}</td>
+                      <td>{c.nombre}</td>
+                      <td style={{ textAlign: 'center' }}>{c.cantidad}</td>
+                      <td style={{ textAlign: 'center' }}>
+                        <button style={{ background: 'none', border: 'none', color: 'red', cursor: 'pointer' }} onClick={() => setCarrito(carrito.filter(x => x.idProducto !== c.idProducto))}>✕</button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {carrito.map((c, idx) => (
-                      <tr key={idx} className="border-b hover:bg-gray-50">
-                        <td className="p-2">{c.codigo}</td>
-                        <td className="p-2 font-medium">{c.nombre}</td>
-                        <td className="p-2 text-center font-bold text-slate-800">{c.cantidad}</td>
-                        <td className="p-2 text-center">
-                          <button onClick={() => quitarDelCarrito(c.idProducto)} className="text-red-500 hover:text-red-700 font-bold text-xs">Quitar</button>
-                        </td>
-                      </tr>
-                    ))}
-                    {carrito.length === 0 && (
-                      <tr><td colSpan={4} className="p-6 text-center text-gray-400">El carrito está vacío.</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="mt-4 flex justify-end">
-                <button onClick={guardarOrdenCompleta} className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-bold">
-                  Guardar Orden (PENDIENTE)
-                </button>
+                  ))}
+                  {carrito.length === 0 && <tr><td colSpan={4} style={{ textAlign: 'center', color: '#999' }}>Carrito vacío.</td></tr>}
+                </tbody>
+              </table>
+              <div style={{ marginTop: '1rem', textAlign: 'right' }}>
+                <button style={s.btn('#2a7')} onClick={guardarOrden}>Guardar orden (PENDIENTE)</button>
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
-
     </div>
   );
 }

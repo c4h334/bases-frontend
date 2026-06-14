@@ -1,367 +1,185 @@
-/* eslint-disable react-hooks/immutability */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
-interface Producto {
-  idProducto: number;
-  codigo: string;
-  nombre: string;
-  detalle: string;
-  cantidadActual: number;
-  stockCritico: number;
-  bodega: string;
-  pasillo: string;
-  estante: string;
-}
-
-interface Cliente {
-  idCliente: number;
-  nombre: string;
-  rolCliente: string;
-}
-
-interface RecepcionHistorial {
-  idDetalleRecepcion: number;
-  idRecepcion: number;
-  numeroLote: string;
-  fechaRecepcion: string;
-  usuarioAtendio: string;
-  clienteNombre: string;
-  cantidad: number;
-}
-
 export default function Recepcion() {
   const [vista, setVista] = useState<'lista' | 'formProducto' | 'formRecepcion' | 'historial'>('lista');
-  
-  const [productos, setProductos] = useState<Producto[]>([]);
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [historial, setHistorial] = useState<RecepcionHistorial[]>([]);
-  const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
-
-  const [formProducto, setFormProducto] = useState({
-    codigo: '', nombre: '', detalle: '', stockCritico: 0, bodega: '', pasillo: '', estante: ''
-  });
-
-  const [formRecepcion, setFormRecepcion] = useState({
-    idCliente: '', numeroLote: '', cantidad: 0
-  });
-
+  const [productos, setProductos] = useState<any[]>([]);
+  const [clientes, setClientes] = useState<any[]>([]);
+  const [historial, setHistorial] = useState<any[]>([]);
+  const [productoSel, setProductoSel] = useState<any>(null);
+  const [formProd, setFormProd] = useState({ codigo: '', nombre: '', detalle: '', stockCritico: 0, bodega: '', pasillo: '', estante: '' });
+  const [formRec, setFormRec] = useState({ idCliente: '', numeroLote: '', cantidad: 1 });
   const [error, setError] = useState('');
+  const operario = localStorage.getItem('operario_username') || 'sistema';
 
-  useEffect(() => {
-    if (vista === 'lista') cargarProductos();
-  }, [vista]);
+  useEffect(() => { if (vista === 'lista') cargarProductos(); }, [vista]);
 
   const cargarProductos = async () => {
-    try {
-      const res = await api.get('/Productos');
-      setProductos(res.data);
-    } catch (err) {
-      console.error(err);
-      setError('Error al cargar el catálogo de productos.');
-    }
+    try { setProductos((await api.get('/Productos')).data); }
+    catch { setError('Error al cargar productos.'); }
   };
 
   const cargarClientes = async () => {
     try {
       const res = await api.get('/Clientes');
-      const clientesOrigen = res.data.filter((c: Cliente) => c.rolCliente === 'ORIGEN' || c.rolCliente === 'AMBOS');
-      setClientes(clientesOrigen);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const cargarHistorial = async (idProducto: number) => {
-    try {
-      // 1. CORRECCIÓN: La ruta del controlador en C# está en plural y minúscula
-      const res = await api.get(`/Recepciones/producto/${idProducto}`);
-      setHistorial(res.data);
-    } catch (err) {
-      console.error(err);
-      setHistorial([]);
-    }
-  };
-
-  // ==========================================
-  // LÓGICA DE PRODUCTOS (CRUD)
-  // ==========================================
-  const abrirFormNuevoProducto = () => {
-    setProductoSeleccionado(null);
-    setFormProducto({ codigo: '', nombre: '', detalle: '', stockCritico: 0, bodega: '', pasillo: '', estante: '' });
-    setError('');
-    setVista('formProducto');
-  };
-
-  const abrirFormEditarProducto = (prod: Producto) => {
-    setProductoSeleccionado(prod);
-    setFormProducto({
-      codigo: prod.codigo, nombre: prod.nombre, detalle: prod.detalle || '',
-      stockCritico: prod.stockCritico, bodega: prod.bodega, pasillo: prod.pasillo, estante: prod.estante
-    });
-    setError('');
-    setVista('formProducto');
+      setClientes(res.data.filter((c: any) => c.rolCliente === 'ORIGEN' || c.rolCliente === 'AMBOS'));
+    } catch { /* silencioso */ }
   };
 
   const guardarProducto = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (productoSeleccionado) {
-        await api.put(`/Productos/${productoSeleccionado.idProducto}`, { 
-          idProducto: productoSeleccionado.idProducto,
-          cantidadActual: productoSeleccionado.cantidadActual, 
-          ...formProducto 
-        });
+      if (productoSel) {
+        await api.put(`/Productos/${productoSel.idProducto}`, { idProducto: productoSel.idProducto, cantidadActual: productoSel.cantidadActual, ...formProd });
       } else {
-        await api.post('/Productos', { ...formProducto, cantidadActual: 0 });
+        await api.post('/Productos', { ...formProd, cantidadActual: 0 });
       }
       setVista('lista');
-    } catch (err) {
-      console.error(err);
-      setError('Error al guardar el producto.');
-    }
+    } catch { setError('Error al guardar producto.'); }
   };
 
   const eliminarProducto = async (id: number) => {
-    if (!window.confirm('¿Está seguro de eliminar este producto?')) return;
-    try {
-      await api.delete(`/Productos/${id}`);
-      cargarProductos();
-    } catch (err: any) {
-      if (err.response?.status === 500 || err.response?.status === 400) {
-        alert('Error de Integridad: No se puede eliminar un producto que ya tiene recepciones o despachos en el historial.');
-      }
-    }
-  };
-
-  // ==========================================
-  // LÓGICA DE RECEPCIÓN (INGRESO DE LOTES)
-  // ==========================================
-  const abrirFormRecepcion = (prod: Producto) => {
-    setProductoSeleccionado(prod);
-    setFormRecepcion({ idCliente: '', numeroLote: '', cantidad: 1 });
-    setError('');
-    cargarClientes();
-    setVista('formRecepcion');
+    if (!window.confirm('¿Eliminar este producto?')) return;
+    try { await api.delete(`/Productos/${id}`); cargarProductos(); }
+    catch { alert('No se puede eliminar: tiene movimientos asociados.'); }
   };
 
   const registrarRecepcion = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formRecepcion.idCliente || formRecepcion.cantidad <= 0) {
-      setError('Complete todos los campos correctamente.');
-      return;
-    }
-    
+    if (!formRec.idCliente || formRec.cantidad <= 0) { setError('Complete todos los campos.'); return; }
     try {
-      // 2. CORRECCIÓN: Consumir el endpoint del Procedure con las propiedades exactas requeridas
+      // Ejecuta sp_RegistrarRecepcion (transacción ACID)
       await api.post('/Recepciones/registrar-sp', {
-        idProducto: productoSeleccionado?.idProducto,
-        idCliente: parseInt(formRecepcion.idCliente),
-        numeroLote: formRecepcion.numeroLote,
-        cantidad: formRecepcion.cantidad, 
-        usuarioAtendio: 'amonge' // Usamos un usuario real de tu BD (Anderson) en lugar de 'Sistema' para mantener la integridad en los reportes
+        idProducto: productoSel?.idProducto,
+        idCliente: parseInt(formRec.idCliente),
+        numeroLote: formRec.numeroLote,
+        cantidad: formRec.cantidad,
+        usuarioAtendio: operario
       });
-      alert('Lote recibido y stock actualizado con éxito mediante Base de Datos.');
+      alert('Lote registrado exitosamente (sp_RegistrarRecepcion).');
       setVista('lista');
-    } catch (err: any) {
-      console.error(err);
-      // Capturamos el error limpio que devuelve MySQL (ej. si la cantidad es menor a 0)
-      setError(err.response?.data?.message || 'Error al registrar la recepción del lote.');
-    }
+    } catch (err: any) { setError(err.response?.data?.message || 'Error al registrar recepción.'); }
   };
 
-  const abrirHistorial = (prod: Producto) => {
-    setProductoSeleccionado(prod);
-    cargarHistorial(prod.idProducto);
+  const abrirHistorial = async (prod: any) => {
+    setProductoSel(prod);
+    try { setHistorial((await api.get(`/Recepciones/producto/${prod.idProducto}`)).data); }
+    catch { setHistorial([]); }
     setVista('historial');
   };
 
+  const s = { input: { width: '100%', padding: '0.4rem', border: '1px solid #ccc', boxSizing: 'border-box' as const, marginTop: '0.2rem' }, btn: (color = '#333') => ({ padding: '0.4rem 0.9rem', background: color, color: '#fff', border: 'none', cursor: 'pointer', marginRight: '0.5rem' }), label: { display: 'block' as const, marginBottom: '0.75rem' } };
+
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md min-h-[80vh]">
-      
-      {/* VISTA 1: LISTADO PRINCIPAL */}
+    <div style={{ padding: '1.5rem' }}>
+
+      {/* VISTA 1 — Catálogo de productos */}
       {vista === 'lista' && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center border-b pb-4">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-800">Aprovisionamiento y Catálogo</h2>
-              <p className="text-sm text-gray-500">Gestione los productos y registre la entrada de nuevos lotes</p>
-            </div>
-            <button onClick={abrirFormNuevoProducto} className="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-700 font-medium">
-              + Nuevo Producto
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 style={{ margin: 0 }}>Módulo de Recepción</h2>
+            <button style={s.btn()} onClick={() => { setProductoSel(null); setFormProd({ codigo: '', nombre: '', detalle: '', stockCritico: 0, bodega: '', pasillo: '', estante: '' }); setError(''); setVista('formProducto'); }}>
+              + Nuevo producto
             </button>
           </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-slate-100 text-slate-700 text-sm font-semibold">
-                <tr>
-                  <th className="p-3">Código</th>
-                  <th className="p-3">Producto</th>
-                  <th className="p-3">Ubicación</th>
-                  <th className="p-3 text-center">Stock</th>
-                  <th className="p-3 text-center">Acciones de Inventario</th>
-                  <th className="p-3 text-right">Mantenimiento</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 text-sm">
-                {productos.map(p => (
-                  <tr key={p.idProducto} className="hover:bg-gray-50">
-                    <td className="p-3 font-medium text-slate-700">{p.codigo}</td>
-                    <td className="p-3">
-                      <div className="font-semibold text-slate-900">{p.nombre}</div>
-                      <div className="text-xs text-gray-500 truncate max-w-xs">{p.detalle}</div>
-                    </td>
-                    <td className="p-3 text-gray-600">{`${p.bodega} > ${p.pasillo} > ${p.estante}`}</td>
-                    <td className="p-3 text-center font-bold text-slate-800">{p.cantidadActual}</td>
-                    <td className="p-3 text-center space-x-2">
-                      <button onClick={() => abrirFormRecepcion(p)} className="bg-green-100 text-green-800 px-3 py-1 rounded hover:bg-green-200 font-medium">
-                        Recibir Lote
-                      </button>
-                      <button onClick={() => abrirHistorial(p)} className="bg-blue-100 text-blue-800 px-3 py-1 rounded hover:bg-blue-200 font-medium">
-                        Ver Entradas
-                      </button>
-                    </td>
-                    <td className="p-3 text-right space-x-3">
-                      <button onClick={() => abrirFormEditarProducto(p)} className="text-slate-600 hover:text-slate-900 font-medium">Editar</button>
-                      <button onClick={() => eliminarProducto(p.idProducto)} className="text-red-600 hover:text-red-800 font-medium">Borrar</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* VISTA 2: FORMULARIO DE PRODUCTO */}
-      {vista === 'formProducto' && (
-        <div className="max-w-2xl mx-auto space-y-6">
-          <div className="border-b pb-4">
-            <h2 className="text-xl font-bold text-slate-800">{productoSeleccionado ? 'Editar Producto' : 'Crear Nuevo Producto'}</h2>
-            <p className="text-sm text-gray-500">
-              {productoSeleccionado ? 'Nota: La cantidad en inventario solo puede ser alterada mediante recepciones o despachos.' : 'Ingrese los detalles de catalogación y ubicación física.'}
-            </p>
-          </div>
-
-          <form onSubmit={guardarProducto} className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Código</label>
-              <input type="text" required value={formProducto.codigo} onChange={e => setFormProducto({...formProducto, codigo: e.target.value})} className="w-full mt-1 border rounded p-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Nombre</label>
-              <input type="text" required value={formProducto.nombre} onChange={e => setFormProducto({...formProducto, nombre: e.target.value})} className="w-full mt-1 border rounded p-2" />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700">Detalle / Descripción</label>
-              <textarea value={formProducto.detalle} onChange={e => setFormProducto({...formProducto, detalle: e.target.value})} className="w-full mt-1 border rounded p-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Bodega</label>
-              <input type="text" required value={formProducto.bodega} onChange={e => setFormProducto({...formProducto, bodega: e.target.value})} className="w-full mt-1 border rounded p-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Pasillo</label>
-              <input type="text" required value={formProducto.pasillo} onChange={e => setFormProducto({...formProducto, pasillo: e.target.value})} className="w-full mt-1 border rounded p-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Estante</label>
-              <input type="text" required value={formProducto.estante} onChange={e => setFormProducto({...formProducto, estante: e.target.value})} className="w-full mt-1 border rounded p-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Stock Crítico (Alerta)</label>
-              <input type="number" min="0" required value={formProducto.stockCritico} onChange={e => setFormProducto({...formProducto, stockCritico: parseInt(e.target.value)})} className="w-full mt-1 border rounded p-2" />
-            </div>
-
-            {error && <div className="col-span-2 text-red-600 bg-red-50 p-2 rounded text-sm">{error}</div>}
-
-            <div className="col-span-2 flex space-x-3 mt-4">
-              <button type="submit" className="bg-slate-800 text-white px-6 py-2 rounded hover:bg-slate-700">Guardar Producto</button>
-              <button type="button" onClick={() => setVista('lista')} className="bg-gray-200 text-gray-800 px-6 py-2 rounded hover:bg-gray-300">Cancelar</button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* VISTA 3: FORMULARIO DE RECEPCIÓN */}
-      {vista === 'formRecepcion' && productoSeleccionado && (
-        <div className="max-w-xl mx-auto space-y-6">
-          <div className="border-b pb-4 bg-slate-50 p-4 rounded-lg">
-            <h2 className="text-xl font-bold text-slate-800">Registrar Recepción de Lote</h2>
-            <p className="text-slate-600 mt-1">Producto: <strong>{productoSeleccionado.codigo} - {productoSeleccionado.nombre}</strong></p>
-            <p className="text-sm text-slate-500">Stock Actual: {productoSeleccionado.cantidadActual}</p>
-          </div>
-
-          <form onSubmit={registrarRecepcion} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Cliente de Origen</label>
-              <select required value={formRecepcion.idCliente} onChange={e => setFormRecepcion({...formRecepcion, idCliente: e.target.value})} className="w-full mt-1 border rounded p-2">
-                <option value="">Seleccione un proveedor/cliente...</option>
-                {clientes.map(c => <option key={c.idCliente} value={c.idCliente}>{c.nombre}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Número de Lote (Rastreo)</label>
-              <input type="text" required value={formRecepcion.numeroLote} onChange={e => setFormRecepcion({...formRecepcion, numeroLote: e.target.value})} className="w-full mt-1 border rounded p-2" placeholder="Ej. LOTE-2026-X" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Cantidad Entrante</label>
-              <input type="number" min="1" required value={formRecepcion.cantidad} onChange={e => setFormRecepcion({...formRecepcion, cantidad: parseInt(e.target.value)})} className="w-full mt-1 border rounded p-2" />
-            </div>
-
-            {error && <div className="text-red-600 bg-red-50 p-2 rounded text-sm">{error}</div>}
-
-            <div className="flex space-x-3 pt-4">
-              <button type="submit" className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-medium">Procesar Ingreso</button>
-              <button type="button" onClick={() => setVista('lista')} className="bg-gray-200 text-gray-800 px-6 py-2 rounded hover:bg-gray-300">Cancelar</button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* VISTA 4: HISTORIAL DE RECEPCIONES */}
-      {vista === 'historial' && productoSeleccionado && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center border-b pb-4">
-            <div>
-              <h2 className="text-xl font-bold text-slate-800">Historial de Ingresos</h2>
-              <p className="text-sm text-gray-500">Producto: {productoSeleccionado.nombre}</p>
-            </div>
-            <button onClick={() => setVista('lista')} className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">
-              Volver al Catálogo
-            </button>
-          </div>
-
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-100 text-slate-700 text-sm font-semibold">
-              <tr>
-                <th className="p-3">Fecha y Hora</th>
-                <th className="p-3">Lote</th>
-                <th className="p-3">Cliente Proveedor</th>
-                <th className="p-3 text-center">Cantidad Recibida</th>
-                <th className="p-3">Operario</th>
-              </tr>
+          {error && <p style={{ color: 'red' }}>{error}</p>}
+          <table border={1} cellPadding={5} cellSpacing={0} style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+            <thead style={{ background: '#eee' }}>
+              <tr><th>Código</th><th>Nombre</th><th>Ubicación</th><th>Stock</th><th>Acciones</th></tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 text-sm">
-              {historial.map(h => (
-                <tr key={h.idDetalleRecepcion} className="hover:bg-green-50">
-                  <td className="p-3 text-gray-600">{new Date(h.fechaRecepcion).toLocaleString('es-CR')}</td>
-                  <td className="p-3 font-medium text-slate-700">{h.numeroLote}</td>
-                  <td className="p-3">{h.clienteNombre}</td>
-                  <td className="p-3 text-center font-bold text-green-700">+{h.cantidad}</td>
-                  <td className="p-3 text-gray-500">{h.usuarioAtendio}</td>
+            <tbody>
+              {productos.map(p => (
+                <tr key={p.idProducto}>
+                  <td>{p.codigo}</td>
+                  <td>{p.nombre}</td>
+                  <td>{p.bodega} / {p.pasillo} / {p.estante}</td>
+                  <td style={{ textAlign: 'center' }}>{p.cantidadActual}</td>
+                  <td>
+                    <button style={s.btn('#2a7')} onClick={() => { setProductoSel(p); setFormRec({ idCliente: '', numeroLote: '', cantidad: 1 }); setError(''); cargarClientes(); setVista('formRecepcion'); }}>Recibir lote</button>
+                    <button style={s.btn('#37a')} onClick={() => abrirHistorial(p)}>Historial</button>
+                    <button style={s.btn()} onClick={() => { setProductoSel(p); setFormProd({ codigo: p.codigo, nombre: p.nombre, detalle: p.detalle || '', stockCritico: p.stockCritico, bodega: p.bodega, pasillo: p.pasillo, estante: p.estante }); setError(''); setVista('formProducto'); }}>Editar</button>
+                    <button style={s.btn('#c33')} onClick={() => eliminarProducto(p.idProducto)}>Borrar</button>
+                  </td>
                 </tr>
               ))}
-              {historial.length === 0 && (
-                <tr><td colSpan={5} className="p-6 text-center text-gray-500">No hay registros de ingreso para este producto.</td></tr>
-              )}
+              {productos.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: '#999' }}>Sin productos.</td></tr>}
             </tbody>
           </table>
-        </div>
+        </>
       )}
 
+      {/* VISTA 2 — Formulario de producto */}
+      {vista === 'formProducto' && (
+        <>
+          <h2>{productoSel ? 'Editar producto' : 'Nuevo producto'}</h2>
+          <form onSubmit={guardarProducto} style={{ maxWidth: '480px' }}>
+            <label style={s.label}>Código <input style={s.input} required value={formProd.codigo} onChange={e => setFormProd({ ...formProd, codigo: e.target.value })} /></label>
+            <label style={s.label}>Nombre <input style={s.input} required value={formProd.nombre} onChange={e => setFormProd({ ...formProd, nombre: e.target.value })} /></label>
+            <label style={s.label}>Detalle <input style={s.input} value={formProd.detalle} onChange={e => setFormProd({ ...formProd, detalle: e.target.value })} /></label>
+            <label style={s.label}>Bodega <input style={s.input} required value={formProd.bodega} onChange={e => setFormProd({ ...formProd, bodega: e.target.value })} /></label>
+            <label style={s.label}>Pasillo <input style={s.input} required value={formProd.pasillo} onChange={e => setFormProd({ ...formProd, pasillo: e.target.value })} /></label>
+            <label style={s.label}>Estante <input style={s.input} required value={formProd.estante} onChange={e => setFormProd({ ...formProd, estante: e.target.value })} /></label>
+            <label style={s.label}>Stock crítico <input style={s.input} type="number" min={0} required value={formProd.stockCritico} onChange={e => setFormProd({ ...formProd, stockCritico: parseInt(e.target.value) })} /></label>
+            {error && <p style={{ color: 'red' }}>{error}</p>}
+            <button type="submit" style={s.btn()}>Guardar</button>
+            <button type="button" style={s.btn('#888')} onClick={() => setVista('lista')}>Cancelar</button>
+          </form>
+        </>
+      )}
+
+      {/* VISTA 3 — Formulario de recepción (sp_RegistrarRecepcion) */}
+      {vista === 'formRecepcion' && productoSel && (
+        <>
+          <h2>Registrar ingreso de lote</h2>
+          <p>Producto: <strong>{productoSel.codigo} — {productoSel.nombre}</strong> (stock actual: {productoSel.cantidadActual})</p>
+          <p style={{ background: '#e8f0fe', border: '1px solid #aac', padding: '0.5rem', fontSize: '0.85rem' }}>
+            Ejecuta <strong>sp_RegistrarRecepcion</strong> con transacción ACID. El trigger <strong>tg_AuditoriaInventario</strong> registra el cambio automáticamente.
+          </p>
+          <form onSubmit={registrarRecepcion} style={{ maxWidth: '400px', marginTop: '1rem' }}>
+            <label style={s.label}>
+              Cliente origen
+              <select style={s.input} required value={formRec.idCliente} onChange={e => setFormRec({ ...formRec, idCliente: e.target.value })}>
+                <option value="">Seleccione...</option>
+                {clientes.map(c => <option key={c.idCliente} value={c.idCliente}>{c.nombre}</option>)}
+              </select>
+            </label>
+            <label style={s.label}>Número de lote <input style={s.input} required value={formRec.numeroLote} onChange={e => setFormRec({ ...formRec, numeroLote: e.target.value })} placeholder="Ej: LOTE-2026-001" /></label>
+            <label style={s.label}>Cantidad <input style={s.input} type="number" min={1} required value={formRec.cantidad} onChange={e => setFormRec({ ...formRec, cantidad: parseInt(e.target.value) })} /></label>
+            <label style={s.label}>Operario <input style={{ ...s.input, background: '#f5f5f5' }} value={operario} readOnly /></label>
+            {error && <p style={{ color: 'red' }}>{error}</p>}
+            <button type="submit" style={s.btn('#2a7')}>Confirmar ingreso</button>
+            <button type="button" style={s.btn('#888')} onClick={() => setVista('lista')}>Cancelar</button>
+          </form>
+        </>
+      )}
+
+      {/* VISTA 4 — Historial de recepciones */}
+      {vista === 'historial' && productoSel && (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 style={{ margin: 0 }}>Historial — {productoSel.nombre}</h2>
+            <button style={s.btn('#888')} onClick={() => setVista('lista')}>Volver</button>
+          </div>
+          <table border={1} cellPadding={5} cellSpacing={0} style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+            <thead style={{ background: '#eee' }}>
+              <tr><th>Fecha</th><th>Lote</th><th>Proveedor</th><th>Cantidad</th><th>Operario</th></tr>
+            </thead>
+            <tbody>
+              {historial.map((h, i) => (
+                <tr key={i}>
+                  <td>{new Date(h.fechaRecepcion).toLocaleString('es-CR')}</td>
+                  <td>{h.numeroLote}</td>
+                  <td>{h.clienteNombre}</td>
+                  <td style={{ textAlign: 'center', color: 'green' }}>+{h.cantidad}</td>
+                  <td>{h.usuarioAtendio}</td>
+                </tr>
+              ))}
+              {historial.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: '#999' }}>Sin registros.</td></tr>}
+            </tbody>
+          </table>
+        </>
+      )}
     </div>
   );
 }
