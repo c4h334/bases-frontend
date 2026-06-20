@@ -10,23 +10,23 @@ export default function Navbar() {
   };
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+    `px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
       isActive
-        ? 'bg-slate-900 text-white'
-        : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+        ? 'bg-indigo-55 text-indigo-700 soft-shadow border border-indigo-100/50'
+        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
     }`;
 
   return (
-    <nav className="bg-slate-800 shadow-md">
+    <nav className="glass-nav sticky top-0 z-50 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <div className="flex-shrink-0 text-white font-bold text-xl tracking-wider">
+            <div className="flex-shrink-0 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 font-extrabold text-xl tracking-wider">
               LOGICHAIN
             </div>
             
             <div className="hidden md:block ml-10">
-              <div className="flex space-x-4">
+              <div className="flex space-x-2">
                 <NavLink to="/monitoreo" className={linkClass}>Monitoreo</NavLink>
                 <NavLink to="/clientes" className={linkClass}>Clientes</NavLink>
                 <NavLink to="/recepcion" className={linkClass}>Recepción</NavLink>
@@ -37,12 +37,15 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <span className="text-slate-400 text-xs hidden sm:inline font-mono">
-              Conectado como: {operarioLogueado}
-            </span>
+            <div className="flex items-center space-x-2 bg-slate-100/80 px-3 py-1.5 rounded-xl border border-slate-200/40">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-slate-600 text-xs hidden sm:inline font-medium">
+                Conectado: <span className="font-semibold text-slate-800">{operarioLogueado}</span>
+              </span>
+            </div>
             <button
               onClick={handleLogout}
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+              className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/40 rounded-xl text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-rose-100"
             >
               Cerrar Sesión
             </button>

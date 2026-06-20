@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
+
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -42,32 +43,37 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-800">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-2xl">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-slate-800">LogiChain Solutions</h1>
-          <p className="mt-2 text-sm text-gray-500">Sistema de Gestión de Inventario (SGID)</p>
+    <div className="flex items-center justify-center min-h-screen mesh-bg px-4">
+      <div className="w-full max-w-md p-8 space-y-8 glass-card rounded-3xl premium-shadow">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-extrabold text-2xl soft-shadow mb-2">
+            L
+          </div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-650 to-violet-650">
+            LogiChain Solutions
+          </h1>
+          <p className="text-sm font-medium text-slate-500">Sistema de Gestión de Inventario (SGID)</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Usuario de Base de Datos</label>
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div className="space-y-1">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">Usuario de Base de Datos</label>
             <input
               type="text"
               disabled={cargando}
-              className="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-slate-500 focus:border-slate-500 disabled:bg-gray-100"
+              className="w-full px-4 py-2.5 border border-slate-200/80 rounded-xl bg-white/60 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all disabled:bg-slate-100 text-slate-800 placeholder-slate-400"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Ej: amonge, joviedo"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Contraseña del Servidor</label>
+          <div className="space-y-1">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500 block">Contraseña del Servidor</label>
             <input
               type="password"
               disabled={cargando}
-              className="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-slate-500 focus:border-slate-500 disabled:bg-gray-100"
+              className="w-full px-4 py-2.5 border border-slate-200/80 rounded-xl bg-white/60 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all disabled:bg-slate-100 text-slate-800 placeholder-slate-450"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -75,7 +81,7 @@ export default function Login() {
           </div>
 
           {error && (
-            <div className="p-3 text-sm text-red-700 bg-red-100 border border-red-400 rounded">
+            <div className="p-3 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl">
               {error}
             </div>
           )}
@@ -83,7 +89,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={cargando}
-            className="w-full px-4 py-2 text-white transition-colors bg-slate-700 rounded-lg hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:bg-slate-400"
+            className="w-full px-4 py-3 text-white font-semibold transition-all duration-300 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 rounded-xl hover:shadow-lg hover:shadow-indigo-200/40 focus:outline-none focus:ring-4 focus:ring-indigo-100 disabled:opacity-50 cursor-pointer"
           >
             {cargando ? 'Verificando con MySQL...' : 'Iniciar Sesión'}
           </button>

@@ -103,56 +103,57 @@ export default function Clientes() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="bg-white p-6 rounded-xl shadow-md h-fit">
-        <h2 className="text-xl font-bold text-slate-800 mb-4">
+      <div className="glass-card p-6 rounded-2xl soft-shadow h-fit space-y-4">
+        <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">
           {editandoId ? 'Modificar Cliente' : 'Registrar Nuevo Cliente'}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Nombre Corporativo</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Nombre Corporativo</label>
             <input
               type="text"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-slate-500 focus:border-slate-500"
+              className="w-full px-4 py-2 border border-slate-200/80 rounded-xl bg-white/60 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100/60 transition-all text-sm"
               placeholder="Nombre de la empresa"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Teléfono</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Teléfono</label>
             <input
               type="text"
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-slate-500 focus:border-slate-500"
+              className="w-full px-4 py-2 border border-slate-200/80 rounded-xl bg-white/60 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100/60 transition-all text-sm"
               placeholder="Teléfono de contacto"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Correo Electrónico</label>
             <input
               type="email"
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-slate-500 focus:border-slate-500"
+              className="w-full px-4 py-2 border border-slate-200/80 rounded-xl bg-white/60 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100/60 transition-all text-sm"
               placeholder="Correo electrónico"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Dirección Física</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Dirección Física</label>
             <textarea
               value={direccion}
               onChange={(e) => setDireccion(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-slate-500 focus:border-slate-500"
+              className="w-full px-4 py-2 border border-slate-200/80 rounded-xl bg-white/60 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100/60 transition-all text-sm"
               placeholder="Dirección física"
+              rows={3}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Rol Operativo</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Rol Operativo</label>
             <select
               value={rolCliente}
               onChange={(e: any) => setRolCliente(e.target.value)}
-              className="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-slate-500 focus:border-slate-500"
+              className="w-full px-4 py-2 border border-slate-200/80 rounded-xl bg-white/60 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100/60 transition-all text-sm"
             >
               <option value="ORIGEN">Origen (Solo Ingresos)</option>
               <option value="DESTINO">Destino (Solo Salidas)</option>
@@ -160,13 +161,13 @@ export default function Clientes() {
             </select>
           </div>
           
-          {error && <p className="text-sm text-red-600 bg-red-50 p-2 border border-red-200 rounded">{error}</p>}
-          <div className="flex space-x-2">
-            <button type="submit" className="flex-1 bg-slate-700 text-white py-2 rounded-lg hover:bg-slate-800 transition-colors">
+          {error && <p className="text-xs font-semibold text-rose-600 bg-rose-50 p-3 border border-rose-100 rounded-xl">{error}</p>}
+          <div className="flex gap-2">
+            <button type="submit" className="flex-1 bg-gradient-to-r from-indigo-600 to-violet-650 hover:from-indigo-700 hover:to-violet-700 text-white py-2.5 rounded-xl font-semibold soft-shadow transition-all duration-200 cursor-pointer">
               {editandoId ? 'Actualizar' : 'Guardar'}
             </button>
             {editandoId && (
-              <button type="button" onClick={limpiarFormulario} className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400">
+              <button type="button" onClick={limpiarFormulario} className="bg-slate-200/70 hover:bg-slate-200 border border-slate-300/40 text-slate-700 px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 cursor-pointer">
                 Cancelar
               </button>
             )}
@@ -174,44 +175,61 @@ export default function Clientes() {
         </form>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-md lg:col-span-2 overflow-hidden overflow-x-auto">
-        <h2 className="text-xl font-bold text-slate-800 mb-4">Listado de Clientes de LogiChain</h2>
-        <table className="w-full text-left border-collapse min-w-max">
-          <thead className="bg-slate-100 text-slate-700 text-sm font-semibold border-b">
-            <tr>
-              <th className="p-3">ID</th>
-              <th className="p-3">Cliente</th>
-              <th className="p-3">Contacto</th>
-              <th className="p-3">Rol</th>
-              <th className="p-3 text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 text-sm">
-            {clientes.map(c => (
-              <tr key={c.idCliente} className="hover:bg-gray-50">
-                <td className="p-3 text-gray-500">#{c.idCliente.toString().padStart(4, '0')}</td>
-                <td className="p-3 font-medium text-slate-800">{c.nombre}</td>
-                <td className="p-3 text-gray-600">
-                  <div>{c.telefono || 'Sin teléfono'}</div>
-                  <div className="text-xs text-gray-400">{c.correo || 'Sin correo'}</div>
-                </td>
-                <td className="p-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                    c.rolCliente === 'ORIGEN' ? 'bg-blue-100 text-blue-800' : c.rolCliente === 'DESTINO' ? 'bg-orange-100 text-orange-800' : 'bg-purple-100 text-purple-800'
-                  }`}>
-                    {c.rolCliente}
-                  </span>
-                </td>
-                <td className="p-3 text-right space-x-2">
-                  <button onClick={() => iniciarEdicion(c)} className="text-slate-600 hover:text-slate-900 font-medium">Modificar</button>
-                  <button onClick={() => eliminarCliente(c.idCliente)} className="text-red-600 hover:text-red-800 font-medium">
-                    Eliminar
-                  </button>
-                </td>
+      <div className="glass-card p-6 rounded-2xl soft-shadow lg:col-span-2 overflow-hidden flex flex-col">
+        <div className="mb-4">
+          <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">Listado de Clientes</h2>
+          <p className="text-xs text-slate-400 mt-0.5">Socios comerciales registrados para orígenes y destinos de carga</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-max">
+            <thead className="bg-slate-50/75 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200/40">
+              <tr>
+                <th className="p-4">ID</th>
+                <th className="p-4">Cliente</th>
+                <th className="p-4">Contacto</th>
+                <th className="p-4">Rol</th>
+                <th className="p-4 text-right">Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {clientes.map(c => (
+                <tr key={c.idCliente} className="hover:bg-slate-50/40 transition-colors duration-150">
+                  <td className="p-4 text-slate-400 font-mono">#{c.idCliente.toString().padStart(4, '0')}</td>
+                  <td className="p-4 font-semibold text-slate-850">{c.nombre}</td>
+                  <td className="p-4">
+                    <div className="font-medium text-slate-700">{c.telefono || 'Sin teléfono'}</div>
+                    <div className="text-xs text-slate-400 mt-0.5">{c.correo || 'Sin correo'}</div>
+                  </td>
+                  <td className="p-4">
+                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold border shadow-xs ${
+                      c.rolCliente === 'ORIGEN' 
+                        ? 'bg-sky-50 text-sky-700 border-sky-100' 
+                        : c.rolCliente === 'DESTINO' 
+                          ? 'bg-amber-50 text-amber-700 border-amber-100' 
+                          : 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                    }`}>
+                      {c.rolCliente}
+                    </span>
+                  </td>
+                  <td className="p-4 text-right space-x-1">
+                    <button 
+                      onClick={() => iniciarEdicion(c)} 
+                      className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50/60 px-2.5 py-1.5 rounded-lg font-bold text-xs transition-all duration-150 cursor-pointer"
+                    >
+                      Modificar
+                    </button>
+                    <button 
+                      onClick={() => eliminarCliente(c.idCliente)} 
+                      className="text-rose-600 hover:text-rose-850 hover:bg-rose-50/60 px-2.5 py-1.5 rounded-lg font-bold text-xs transition-all duration-150 cursor-pointer"
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

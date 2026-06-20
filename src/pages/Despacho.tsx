@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
@@ -122,51 +122,60 @@ export default function Despacho() {
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md min-h-[80vh]">
+    <div className="glass-card p-6 md:p-8 rounded-3xl soft-shadow min-h-[80vh] flex flex-col">
       
       {vista === 'lista' && (
-        <>
-          <div className="flex justify-between items-center border-b pb-4 mb-4">
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 border-b border-slate-200/50 pb-5">
             <div>
-              <h2 className="text-2xl font-bold text-slate-800">Módulo de Distribución (Despachos)</h2>
-              <p className="text-sm text-gray-500">Historial de la última semana y ejecución transaccional</p>
+              <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight">Distribución (Despachos)</h2>
+              <p className="text-sm text-slate-500 font-medium mt-1">Historial de despachos y ejecución transaccional por Base de Datos</p>
             </div>
-            <button onClick={abrirNuevoDespacho} className="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-700 font-medium">
+            <button 
+              onClick={abrirNuevoDespacho} 
+              className="bg-gradient-to-r from-indigo-600 to-violet-650 hover:from-indigo-700 hover:to-violet-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm soft-shadow transition-all duration-250 cursor-pointer text-center"
+            >
               + Nueva Orden de Despacho
             </button>
           </div>
 
-          {error && <div className="mb-4 text-red-600 bg-red-50 p-3 rounded text-sm">{error}</div>}
+          {error && <div className="text-xs font-semibold text-rose-600 bg-rose-50 p-3 border border-rose-100 rounded-xl">{error}</div>}
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-slate-100 text-slate-700 text-sm font-semibold">
+            <table className="w-full text-left border-collapse min-w-max">
+              <thead className="bg-slate-50/75 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200/40">
                 <tr>
-                  <th className="p-3">ID Despacho</th>
-                  <th className="p-3">Cliente Destino</th>
-                  <th className="p-3">Fecha de Orden</th>
-                  <th className="p-3">Estado</th>
-                  <th className="p-3">Operario</th>
-                  <th className="p-3 text-center">Acción Transaccional</th>
+                  <th className="p-4">ID Despacho</th>
+                  <th className="p-4">Cliente Destino</th>
+                  <th className="p-4">Fecha de Orden</th>
+                  <th className="p-4">Estado</th>
+                  <th className="p-4">Operario</th>
+                  <th className="p-4 text-center">Acción Transaccional</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 text-sm">
+              <tbody className="divide-y divide-slate-100 text-sm">
                 {despachos.map((d: any) => (
-                  <tr key={d.idDespacho} className="hover:bg-gray-50">
-                    <td className="p-3 font-medium">#{d.idDespacho}</td>
-                    <td className="p-3">{d.cliente?.nombre || 'N/A'}</td>
-                    <td className="p-3">{new Date(d.fechaDespacho).toLocaleString('es-CR')}</td>
-                    <td className="p-3">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${d.estado === 'PROCESADO' ? 'bg-green-100 text-green-800' : d.estado === 'CANCELADO' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                  <tr key={d.idDespacho} className="hover:bg-slate-50/40 transition-colors duration-150">
+                    <td className="p-4 font-mono font-bold text-slate-400">#{d.idDespacho}</td>
+                    <td className="p-4 font-semibold text-slate-800">{d.cliente?.nombre || 'N/A'}</td>
+                    <td className="p-4 text-slate-650">{new Date(d.fechaDespacho).toLocaleString('es-CR')}</td>
+                    <td className="p-4">
+                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold border shadow-xs ${
+                        d.estado === 'PROCESADO' 
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                          : d.estado === 'CANCELADO' 
+                            ? 'bg-rose-50 text-rose-700 border-rose-100' 
+                            : 'bg-amber-50 text-amber-700 border-amber-100'
+                      }`}>
                         {d.estado}
                       </span>
                     </td>
-                    <td className="p-3 text-gray-600">{d.operario}</td>
-                    <td className="p-3 text-center">
+                    <td className="p-4 text-slate-550 font-mono text-xs">{d.operario}</td>
+                    <td className="p-4 text-center">
                       {d.estado === 'PENDIENTE' && (
                         <button 
                           onClick={() => procesarDespachoSP(d.idDespacho, d.idCliente)} 
-                          className="bg-orange-500 text-white px-4 py-1 rounded hover:bg-orange-600 font-medium"
+                          className="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/50 px-3.5 py-1.5 rounded-xl font-bold text-xs shadow-xs transition-all duration-150 cursor-pointer"
                         >
                           Ejecutar SP (Procesar)
                         </button>
@@ -174,88 +183,131 @@ export default function Despacho() {
                     </td>
                   </tr>
                 ))}
-                {despachos.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-gray-500">No hay despachos recientes.</td></tr>}
+                {despachos.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-6 text-center text-slate-400 font-medium">
+                      No hay despachos recientes en el historial.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
-        </>
+        </div>
       )}
 
       {vista === 'nuevo' && (
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="border-b pb-4 mb-4 flex justify-between items-center">
+        <div className="w-full space-y-6">
+          <div className="border-b border-slate-200/50 pb-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
-              <h2 className="text-xl font-bold text-slate-800">Crear Orden de Despacho (Carrito)</h2>
-              <p className="text-sm text-gray-500">Agregue los productos a despachar. La orden quedará PENDIENTE hasta ejecutar el SP.</p>
+              <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">Crear Orden de Despacho (Carrito)</h2>
+              <p className="text-sm text-slate-500 font-medium mt-1">Agregue los productos a despachar. La orden quedará PENDIENTE hasta ejecutar el SP.</p>
             </div>
-            <button onClick={() => setVista('lista')} className="text-slate-500 hover:text-slate-800 underline">
-              Volver al historial
+            <button 
+              onClick={() => setVista('lista')} 
+              className="bg-slate-200/70 hover:bg-slate-200 border border-slate-300/40 text-slate-700 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-250 cursor-pointer text-center"
+            >
+              Volver al Historial
             </button>
           </div>
 
-          {error && <div className="mb-4 text-red-600 bg-red-50 p-3 rounded text-sm">{error}</div>}
+          {error && <div className="text-xs font-semibold text-rose-600 bg-rose-50 p-3 border border-rose-100 rounded-xl">{error}</div>}
 
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Formulario de Cabecera y Agregar Items */}
-            <div className="col-span-1 space-y-4 bg-slate-50 p-4 rounded border">
+            <div className="lg:col-span-1 space-y-4 bg-slate-50/50 p-5 rounded-2xl border border-slate-200/40">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Cliente Destino</label>
-                <select value={idClienteSel} onChange={e => setIdClienteSel(e.target.value)} className="w-full mt-1 border rounded p-2 text-sm">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Cliente Destino</label>
+                <select 
+                  value={idClienteSel} 
+                  onChange={e => setIdClienteSel(e.target.value)} 
+                  className="w-full px-4 py-2 border border-slate-200/80 rounded-xl bg-white/60 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100/60 transition-all text-sm"
+                >
                   <option value="">Seleccione...</option>
                   {clientes.map((c: any) => <option key={c.idCliente} value={c.idCliente}>{c.nombre}</option>)}
                 </select>
               </div>
 
-              <div className="pt-4 border-t border-gray-200 mt-4">
-                <h3 className="font-semibold text-slate-700 mb-2">Agregar al Carrito</h3>
-                <label className="block text-sm font-medium text-gray-700">Producto</label>
-                <select value={itemProd} onChange={e => setItemProd(e.target.value)} className="w-full mt-1 border rounded p-2 text-sm mb-3">
-                  <option value="">Seleccione producto...</option>
-                  {productos.map((p: any) => <option key={p.idProducto} value={p.idProducto}>{p.codigo} - {p.nombre}</option>)}
-                </select>
+              <div className="pt-4 border-t border-slate-200/60 mt-4 space-y-4">
+                <h3 className="font-bold text-slate-700 text-sm">Agregar Producto</h3>
+                
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Producto</label>
+                  <select 
+                    value={itemProd} 
+                    onChange={e => setItemProd(e.target.value)} 
+                    className="w-full px-4 py-2 border border-slate-200/80 rounded-xl bg-white/60 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100/60 transition-all text-sm"
+                  >
+                    <option value="">Seleccione producto...</option>
+                    {productos.map((p: any) => <option key={p.idProducto} value={p.idProducto}>{p.codigo} - {p.nombre}</option>)}
+                  </select>
+                </div>
 
-                <label className="block text-sm font-medium text-gray-700">Cantidad a Despachar</label>
-                <input type="number" min="1" value={itemCant} onChange={e => setItemCant(parseInt(e.target.value))} className="w-full mt-1 border rounded p-2 text-sm mb-3" />
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Cantidad a Despachar</label>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    value={itemCant} 
+                    onChange={e => setItemCant(parseInt(e.target.value))} 
+                    className="w-full px-4 py-2 border border-slate-200/80 rounded-xl bg-white/60 focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100/60 transition-all text-sm" 
+                  />
+                </div>
 
-                <button onClick={agregarAlCarrito} className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-medium text-sm">
+                <button 
+                  onClick={agregarAlCarrito} 
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-xs transition-all cursor-pointer"
+                >
                   Añadir al carrito
                 </button>
               </div>
             </div>
 
             {/* Vista del Carrito */}
-            <div className="col-span-2">
-              <h3 className="font-semibold text-slate-700 mb-2">Contenido de la Orden</h3>
-              <div className="bg-white border rounded shadow-sm min-h-[250px]">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-100 text-slate-700">
+            <div className="lg:col-span-2 space-y-4">
+              <h3 className="font-bold text-slate-700 text-sm">Contenido de la Orden</h3>
+              <div className="bg-white/50 border border-slate-200/50 rounded-2xl shadow-xs overflow-hidden min-h-[250px]">
+                <table className="w-full text-left text-sm border-collapse">
+                  <thead className="bg-slate-50/75 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200/40">
                     <tr>
-                      <th className="p-2 border-b">Código</th>
-                      <th className="p-2 border-b">Producto</th>
-                      <th className="p-2 border-b text-center">Cant. Solicitada</th>
-                      <th className="p-2 border-b text-center">Acción</th>
+                      <th className="p-3">Código</th>
+                      <th className="p-3">Producto</th>
+                      <th className="p-3 text-center">Cant. Solicitada</th>
+                      <th className="p-3 text-center">Acción</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-100">
                     {carrito.map((c, idx) => (
-                      <tr key={idx} className="border-b hover:bg-gray-50">
-                        <td className="p-2">{c.codigo}</td>
-                        <td className="p-2 font-medium">{c.nombre}</td>
-                        <td className="p-2 text-center font-bold text-slate-800">{c.cantidad}</td>
-                        <td className="p-2 text-center">
-                          <button onClick={() => quitarDelCarrito(c.idProducto)} className="text-red-500 hover:text-red-700 font-bold text-xs">Quitar</button>
+                      <tr key={idx} className="hover:bg-slate-55/40 transition-colors duration-150">
+                        <td className="p-3 font-semibold text-slate-500 font-mono text-xs">{c.codigo}</td>
+                        <td className="p-3 font-semibold text-slate-850">{c.nombre}</td>
+                        <td className="p-3 text-center font-extrabold text-slate-800 text-base">{c.cantidad}</td>
+                        <td className="p-3 text-center">
+                          <button 
+                            onClick={() => quitarDelCarrito(c.idProducto)} 
+                            className="text-rose-600 hover:text-rose-850 hover:bg-rose-50 px-2 py-1 rounded-lg font-bold text-xs transition-all duration-150 cursor-pointer"
+                          >
+                            Quitar
+                          </button>
                         </td>
                       </tr>
                     ))}
                     {carrito.length === 0 && (
-                      <tr><td colSpan={4} className="p-6 text-center text-gray-400">El carrito está vacío.</td></tr>
+                      <tr>
+                        <td colSpan={4} className="p-10 text-center text-slate-400 font-medium">
+                          El carrito está vacío. Agrega productos desde el panel lateral.
+                        </td>
+                      </tr>
                     )}
                   </tbody>
                 </table>
               </div>
 
-              <div className="mt-4 flex justify-end">
-                <button onClick={guardarOrdenCompleta} className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-bold">
+              <div className="flex justify-end pt-2">
+                <button 
+                  onClick={guardarOrdenCompleta} 
+                  className="bg-gradient-to-r from-emerald-600 to-teal-650 hover:from-emerald-700 hover:to-teal-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm soft-shadow transition-all duration-200 cursor-pointer"
+                >
                   Guardar Orden (PENDIENTE)
                 </button>
               </div>
