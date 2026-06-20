@@ -89,19 +89,19 @@ export default function Auditoria() {
                             {movimientos.map((m: any, i) => {
                                 const isRecepcion = m.tipo === 'Recepción';
                                 return (
-                                    <tr key={i} className={`hover:bg-slate-50/40 transition-colors duration-150 ${isRecepcion ? 'bg-sky-50/10' : 'bg-amber-50/10'}`}>
-                                        <td className="p-4 text-slate-600 font-medium">{new Date(m.fecha).toLocaleString('es-CR')}</td>
+                                    <tr key={i} className={`transition-all duration-150 ${isRecepcion ? 'bg-blue-50/50 hover:bg-blue-100/50 border-l-4 border-blue-500' : 'bg-amber-50/55 hover:bg-amber-100/50 border-l-4 border-amber-500'}`}>
+                                        <td className="p-4 text-slate-650 font-semibold">{new Date(m.fecha).toLocaleString('es-CR')}</td>
                                         <td className="p-4">
-                                            <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold border shadow-xs ${isRecepcion ? 'bg-sky-50 text-sky-700 border-sky-100' : 'bg-amber-50 text-amber-700 border-amber-100'
+                                            <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold border shadow-xs ${isRecepcion ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-amber-50 text-amber-700 border-amber-100'
                                                 }`}>
                                                 {m.tipo}
                                             </span>
                                         </td>
-                                        <td className="p-4 font-semibold text-slate-800">{m.cliente}</td>
-                                        <td className={`p-4 text-center font-extrabold ${isRecepcion ? 'text-sky-700' : 'text-amber-700'}`}>
+                                        <td className="p-4 font-extrabold text-slate-800">{m.cliente}</td>
+                                        <td className={`p-4 text-center font-black ${isRecepcion ? 'text-blue-700' : 'text-amber-700'}`}>
                                             {isRecepcion ? `+${m.cantidad}` : `-${m.cantidad}`}
                                         </td>
-                                        <td className="p-4 text-right text-slate-500 font-mono text-xs">{m.usuario}</td>
+                                        <td className="p-4 text-right text-slate-500 font-mono text-xs font-semibold">{m.usuario}</td>
                                     </tr>
                                 );
                             })}
@@ -134,17 +134,17 @@ export default function Auditoria() {
                             {logs.map((l: any, i) => {
                                 const isInc = l.efecto === 'Incremento';
                                 return (
-                                    <tr key={i} className={`hover:bg-slate-50/40 transition-colors duration-150 ${isInc ? 'bg-emerald-50/10' : 'bg-rose-50/10'}`}>
-                                        <td className="p-4 text-slate-600 font-medium">{new Date(l.fecha).toLocaleString('es-CR')}</td>
-                                        <td className="p-4 text-center font-medium text-slate-500">{l.cantidadAnterior}</td>
-                                        <td className="p-4 text-center font-bold text-slate-800">{l.cantidadNueva}</td>
+                                    <tr key={i} className={`transition-all duration-150 ${isInc ? 'bg-emerald-50/50 hover:bg-emerald-100/50 border-l-4 border-emerald-500' : 'bg-rose-50/50 hover:bg-rose-100/50 border-l-4 border-rose-500'}`}>
+                                        <td className="p-4 text-slate-650 font-semibold">{new Date(l.fecha).toLocaleString('es-CR')}</td>
+                                        <td className="p-4 text-center font-bold text-slate-600">{l.cantidadAnterior}</td>
+                                        <td className="p-4 text-center font-extrabold text-slate-850">{l.cantidadNueva}</td>
                                         <td className="p-4 text-center">
                                             <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold border shadow-xs ${isInc ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'
                                                 }`}>
                                                 {l.efecto}
                                             </span>
                                         </td>
-                                        <td className="p-4 text-right text-slate-500 font-mono text-xs">{l.usuario}</td>
+                                        <td className="p-4 text-right text-slate-500 font-mono text-xs font-semibold">{l.usuario}</td>
                                     </tr>
                                 );
                             })}

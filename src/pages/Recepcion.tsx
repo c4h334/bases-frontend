@@ -235,7 +235,7 @@ export default function Recepcion() {
                       <div className="inline-flex gap-2">
                         <button 
                           onClick={() => abrirFormRecepcion(p)} 
-                          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-100/60 px-3.5 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer"
+                          className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100/60 px-3.5 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer"
                         >
                           Recibir Lote
                         </button>
@@ -434,7 +434,7 @@ export default function Recepcion() {
             <div className="flex gap-3 pt-4">
               <button 
                 type="submit" 
-                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-750 text-white py-2.5 rounded-xl font-semibold soft-shadow transition-all duration-200 cursor-pointer"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-700 hover:to-indigo-700 text-white py-2.5 rounded-xl font-semibold soft-shadow transition-all duration-200 cursor-pointer"
               >
                 Procesar Ingreso
               </button>

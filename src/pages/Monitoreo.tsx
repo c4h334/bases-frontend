@@ -73,41 +73,40 @@ export default function Monitoreo() {
                             {productosFiltrados.map((p: any) => {
                                 const isAlert = alertas[p.idProducto] === 'REORDEN';
                                 return (
-                                    <tr key={p.idProducto} className={`hover:bg-slate-55/60 transition-colors duration-150 ${isAlert ? 'bg-rose-50/20' : ''}`}>
+                                    <tr key={p.idProducto} className={`hover:bg-slate-50 transition-colors duration-150 ${isAlert ? 'bg-rose-50/70 border-l-4 border-rose-500' : ''}`}>
                                         <td className="px-6 py-4">
                                             <div className="font-semibold text-slate-800">{p.nombre}</div>
-                                            <div className="text-xs text-slate-400 font-mono mt-0.5">{p.codigo}</div>
+                                            <div className="text-xs text-slate-500 font-mono mt-0.5">{p.codigo}</div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <button 
                                                 onClick={() => setSelectedProductForMap(p)}
-                                                className="text-xs font-semibold text-indigo-750 bg-indigo-50/70 hover:bg-indigo-100 hover:text-indigo-900 border border-indigo-200/40 px-3 py-1.5 rounded-xl transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-3xs hover:shadow-2xs"
+                                                className="text-xs font-bold text-indigo-750 bg-indigo-50/80 hover:bg-indigo-100 hover:text-indigo-900 border border-indigo-200/40 px-3 py-1.5 rounded-xl transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-3xs hover:shadow-2xs"
                                                 title="Ver ubicación en mapa de estantería"
                                             >
-                                                <svg className="w-3.5 h-3.5 text-indigo-550" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                                <svg className="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 </svg>
                                                 <span>{p.bodega} &bull; Pasillo {p.pasillo} &bull; Est. {p.estante}</span>
                                             </button>
                                         </td>
-                                        <td className={`px-6 py-4 text-center font-bold text-base ${isAlert ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
+                                        <td className={`px-6 py-4 text-center font-extrabold text-base ${isAlert ? 'text-rose-600 font-black' : 'text-slate-800'}`}>
                                             {p.cantidadActual}
                                         </td>
-                                        <td className="px-6 py-4 text-xs font-medium text-slate-500">
-                                            {p.ultimoIngreso ? new Date(p.ultimoIngreso).toLocaleString('es-CR') : 'N/A'}
+                                        <td className="px-6 py-4 text-xs font-semibold text-slate-600">
+                                            {p.ultimoIngreso ? new Date(p.ultimoIngreso).toLocaleString('es-CR') : 'Sin ingresos'}
                                         </td>
-                                        <td className="px-6 py-4 text-xs font-medium text-slate-500">
-                                            {p.ultimoDespacho ? new Date(p.ultimoDespacho).toLocaleString('es-CR') : 'N/A'}
+                                        <td className="px-6 py-4 text-xs font-semibold text-slate-600">
+                                            {p.ultimoDespacho ? new Date(p.ultimoDespacho).toLocaleString('es-CR') : 'Sin despachos'}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             {isAlert ? (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-100/80 shadow-xs">
-                                                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse-ring"></span>
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200/50 shadow-3xs animate-pulse">
                                                     ⚠️ REORDEN
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100/80 shadow-xs">
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100/80 shadow-3xs">
                                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                                     Listo (OK)
                                                 </span>

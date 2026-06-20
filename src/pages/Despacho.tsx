@@ -133,7 +133,7 @@ export default function Despacho() {
             </div>
             <button 
               onClick={abrirNuevoDespacho} 
-              className="bg-gradient-to-r from-indigo-600 to-violet-650 hover:from-indigo-700 hover:to-violet-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm soft-shadow transition-all duration-250 cursor-pointer text-center"
+              className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm soft-shadow transition-all duration-250 cursor-pointer text-center"
             >
               + Nueva Orden de Despacho
             </button>
@@ -256,7 +256,7 @@ export default function Despacho() {
 
                 <button 
                   onClick={agregarAlCarrito} 
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-xs transition-all cursor-pointer"
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white py-2.5 rounded-xl font-bold text-sm shadow-xs transition-all cursor-pointer"
                 >
                   Añadir al carrito
                 </button>
@@ -306,7 +306,7 @@ export default function Despacho() {
               <div className="flex justify-end pt-2">
                 <button 
                   onClick={guardarOrdenCompleta} 
-                  className="bg-gradient-to-r from-emerald-600 to-teal-650 hover:from-emerald-700 hover:to-teal-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm soft-shadow transition-all duration-200 cursor-pointer"
+                  className="bg-gradient-to-r from-amber-500 to-orange-650 hover:from-amber-650 hover:to-orange-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm soft-shadow transition-all duration-200 cursor-pointer"
                 >
                   Guardar Orden (PENDIENTE)
                 </button>

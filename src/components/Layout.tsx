@@ -3,7 +3,7 @@ import Navbar from './NavBar';
 
 export default function Layout() {
   return (
-    <div className="min-h-screen bg-slate-50/70 font-sans antialiased text-slate-800">
+    <div className="min-h-screen mesh-bg font-sans antialiased text-slate-800">
       {/* El menú de navegación estático en la parte superior */}
       <Navbar />
       
